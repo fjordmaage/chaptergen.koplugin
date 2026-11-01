@@ -1,0 +1,42 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag (e.g. v0.1.0-alpha)"
+        required: true
+      prerelease:
+        description: "Mark as pre-release"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests
+        run: |
+          sudo apt-get update && sudo apt-get install -y lua5.1
+          lua5.1 tests/run.lua
+
+      - name: Build plugin zip
+        run: |
+          mkdir -p build/chaptergen.koplugin
+          cp main.lua _meta.lua epubtoc.lua README.md LICENSE build/chaptergen.koplugin/
+          cd build && zip -r chaptergen.koplugin.zip chaptergen.koplugin
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(--title "${{ inputs.version }}" --notes-file .github/release-notes.md)
+          if [ "${{ inputs.prerelease }}" = "true" ]; then
+            args+=(--prerelease)
+          fi
+          gh release create "${{ inputs.version }}" build/chaptergen.koplugin.zip "${args[@]}"
