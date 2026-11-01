@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+   <head>
+      <meta name="dtb:uid" content="9780571334667"/>
+      <meta name="dtb:depth" content="1"/>
+      <meta name="dtb:totalPageCount" content="0"/>
+      <meta name="dtb:maxPageNumber" content="0"/>
+   </head>
+   <docTitle>
+      <text>Normal People</text>
+   </docTitle>
+   <navMap>
+      <navPoint id="np-1" playOrder="1">
+         <navLabel>
+            <text>Cover</text>
+         </navLabel>
+         <content src="9780571334667_cover.html"/>
+      </navPoint>
+      <navPoint id="np-2" playOrder="2">
+         <navLabel>
+            <text>Landing Page</text>
+         </navLabel>
+         <content src="9780571334667_landingpage.html"/>
+      </navPoint>
+      <navPoint id="np-3" playOrder="3">
+         <navLabel>
+            <text>Title Page</text>
+         </navLabel>
+         <content src="9780571334667_booktitlepage.html"/>
+      </navPoint>
+      <navPoint id="np-4" playOrder="4">
+         <navLabel>
+            <text>Epigraph</text>
+         </navLabel>
+         <content src="9780571334667_epigraph.html"/>
+      </navPoint>
+      <navPoint id="np-5" playOrder="5">
+         <navLabel>
+            <text>Contents</text>
+         </navLabel>
+         <content src="9780571334667_tableofcontents.html"/>
+      </navPoint>
+      <navPoint id="np-6" playOrder="6">
+         <navLabel>
+            <text>January 2011</text>
+         </navLabel>
+         <content src="9780571334667_chapter_01.html"/>
+      </navPoint>
+      <navPoint id="np-7" playOrder="7">
+         <navLabel>
+            <text>Three Weeks Later (February 2011)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_02.html"/>
+      </navPoint>
+      <navPoint id="np-8" playOrder="8">
+         <navLabel>
+            <text>One Month Later (March 2011)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_03.html"/>
+      </navPoint>
+      <navPoint id="np-9" playOrder="9">
+         <navLabel>
+            <text>Six Weeks Later (April 2011)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_04.html"/>
+      </navPoint>
+      <navPoint id="np-10" playOrder="10">
+         <navLabel>
+            <text>Two Days Later (April 2011)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_05.html"/>
+      </navPoint>
+      <navPoint id="np-11" playOrder="11">
+         <navLabel>
+            <text>Four Months Later (August 2011)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_06.html"/>
+      </navPoint>
+      <navPoint id="np-12" playOrder="12">
+         <navLabel>
+            <text>Three Months Later (November 2011)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_07.html"/>
+      </navPoint>
+      <navPoint id="np-13" playOrder="13">
+         <navLabel>
+            <text>Three Months Later (February 2012)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_08.html"/>
+      </navPoint>
+      <navPoint id="np-14" playOrder="14">
+         <navLabel>
+            <text>Two Months Later (April 2012)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_09.html"/>
+      </navPoint>
+      <navPoint id="np-15" playOrder="15">
+         <navLabel>
+            <text>Three Months Later (July 2012)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_10.html"/>
+      </navPoint>
+      <navPoint id="np-16" playOrder="16">
+         <navLabel>
+            <text>Six Weeks Later (September 2012)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_11.html"/>
+      </navPoint>
+      <navPoint id="np-17" playOrder="17">
+         <navLabel>
+            <text>Four Months Later (January 2013)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_12.html"/>
+      </navPoint>
+      <navPoint id="np-18" playOrder="18">
+         <navLabel>
+            <text>Six Months Later (July 2013)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_13.html"/>
+      </navPoint>
+      <navPoint id="np-19" playOrder="19">
+         <navLabel>
+            <text>Five Months Later (December 2013)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_14.html"/>
+      </navPoint>
+      <navPoint id="np-20" playOrder="20">
+         <navLabel>
+            <text>Three Months Later (March 2014)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_15.html"/>
+      </navPoint>
+      <navPoint id="np-21" playOrder="21">
+         <navLabel>
+            <text>Four Months Later (July 2014)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_16.html"/>
+      </navPoint>
+      <navPoint id="np-22" playOrder="22">
+         <navLabel>
+            <text>Five Minutes Later (July 2014)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_17.html"/>
+      </navPoint>
+      <navPoint id="np-23" playOrder="23">
+         <navLabel>
+            <text>Seven Months Later (February 2015)</text>
+         </navLabel>
+         <content src="9780571334667_chapter_18.html"/>
+      </navPoint>
+      <navPoint id="np-24" playOrder="24">
+         <navLabel>
+            <text>Acknowledgements</text>
+         </navLabel>
+         <content src="9780571334667_acknowledgements.html"/>
+      </navPoint>
+      <navPoint id="np-25" playOrder="25">
+         <navLabel>
+            <text>About the Author</text>
+         </navLabel>
+         <content src="9780571334667_abouttheauthor.html"/>
+      </navPoint>
+      <navPoint id="np-26" playOrder="26">
+         <navLabel>
+            <text>Also by the Author</text>
+         </navLabel>
+         <content src="9780571334667_bythesameauthor.html"/>
+      </navPoint>
+      <navPoint id="np-27" playOrder="27">
+         <navLabel>
+            <text>Copyright</text>
+         </navLabel>
+         <content src="9780571334667_copyrightinserted.html"/>
+      </navPoint>
+   </navMap>
+</ncx>

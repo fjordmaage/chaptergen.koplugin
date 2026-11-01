@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package version="2.0" unique-identifier="BookId" xmlns="http://www.idpf.org/2007/opf">
+  <metadata xmlns:opf="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Conversations with Friends</dc:title>
+    <dc:creator opf:file-as="Rooney, Sally" opf:role="aut">Sally Rooney</dc:creator>
+    <dc:language>en</dc:language>
+    <dc:subject>Novela, Realista, Romántico</dc:subject>
+    <dc:description>A sharply intelligent novel about two college students and the strange, unexpected connection they forge with a married couple. Frances is a coolheaded and darkly observant young woman, vaguely pursuing a career in writing while studying in Dublin. Her best friend is the beautiful and endlessly self-possessed Bobbi. At a local poetry performance one night, they meet a well-known photographer, and as the girls are then gradually drawn into her world, Frances is reluctantly impressed by the older woman’s sophisticated home and handsome husband, Nick. But however amusing Frances and Nick’s flirtation seems at first, it begins to give way to a strange—and then painful—intimacy. Written with gemlike precision and marked by a sly sense of humor, Conversations with Friends is wonderfully alive to the pleasures and dangers of youth, and the messy edges of female friendship.</dc:description>
+    <dc:date opf:event="publication">2017-01-01</dc:date>
+    <dc:publisher>ePubLibre</dc:publisher>
+    <dc:identifier opf:scheme="EPL">70185</dc:identifier>
+    <dc:identifier opf:scheme="revision">1.0</dc:identifier>
+    <dc:date opf:event="modification">2023-04-07</dc:date>
+    <meta name="Sigil version" content="1.1.0" />
+    <dc:identifier opf:scheme="UUID" id="BookId">urn:uuid:9e7787c8-5a7d-4327-b16a-ad8a97361452</dc:identifier>
+    <meta name="cover" content="cover.jpg" />
+    <meta name="calibre:user_metadata:#version" content="{&quot;is_category&quot;: true, &quot;#extra#&quot;: null, &quot;kind&quot;: &quot;field&quot;, &quot;is_custom&quot;: true, &quot;is_csp&quot;: false, &quot;colnum&quot;: 5, &quot;column&quot;: &quot;value&quot;, &quot;rec_index&quot;: 25, &quot;search_terms&quot;: [&quot;#version&quot;], &quot;link_column&quot;: &quot;value&quot;, &quot;is_multiple2&quot;: {&quot;cache_to_list&quot;: &quot;|&quot;, &quot;list_to_ui&quot;: &quot;, &quot;, &quot;ui_to_list&quot;: &quot;,&quot;}, &quot;is_multiple&quot;: &quot;|&quot;, &quot;datatype&quot;: &quot;text&quot;, &quot;#value#&quot;: [&quot;1.0&quot;], &quot;category_sort&quot;: &quot;value&quot;, &quot;table&quot;: &quot;custom_column_5&quot;, &quot;is_editable&quot;: true, &quot;label&quot;: &quot;version&quot;, &quot;display&quot;: {&quot;is_names&quot;: false}, &quot;name&quot;: &quot;Versión&quot;}" />
+    <meta name="calibre:user_metadata:#autor_ord" content="{&quot;is_category&quot;: false, &quot;#extra#&quot;: null, &quot;kind&quot;: &quot;field&quot;, &quot;is_custom&quot;: true, &quot;is_csp&quot;: false, &quot;colnum&quot;: 3, &quot;column&quot;: &quot;value&quot;, &quot;rec_index&quot;: 23, &quot;search_terms&quot;: [&quot;#autor_ord&quot;], &quot;link_column&quot;: &quot;value&quot;, &quot;is_multiple2&quot;: {}, &quot;is_multiple&quot;: null, &quot;datatype&quot;: &quot;composite&quot;, &quot;#value#&quot;: &quot;Sally Rooney&quot;, &quot;category_sort&quot;: &quot;value&quot;, &quot;table&quot;: &quot;custom_column_3&quot;, &quot;is_editable&quot;: true, &quot;label&quot;: &quot;autor_ord&quot;, &quot;display&quot;: {&quot;composite_template&quot;: &quot;{author_sort}&quot;, &quot;contains_html&quot;: false, &quot;make_category&quot;: false, &quot;use_decorations&quot;: 0, &quot;composite_sort&quot;: &quot;text&quot;}, &quot;name&quot;: &quot;Autores&quot;}" />
+    <meta name="calibre:user_metadata:#epg_id" content="{&quot;is_category&quot;: false, &quot;#extra#&quot;: null, &quot;kind&quot;: &quot;field&quot;, &quot;is_custom&quot;: true, &quot;is_csp&quot;: false, &quot;colnum&quot;: 4, &quot;column&quot;: &quot;value&quot;, &quot;rec_index&quot;: 24, &quot;search_terms&quot;: [&quot;#epg_id&quot;], &quot;link_column&quot;: &quot;value&quot;, &quot;is_multiple2&quot;: {}, &quot;is_multiple&quot;: null, &quot;datatype&quot;: &quot;float&quot;, &quot;#value#&quot;: 10070185.0, &quot;category_sort&quot;: &quot;value&quot;, &quot;table&quot;: &quot;custom_column_4&quot;, &quot;is_editable&quot;: true, &quot;label&quot;: &quot;epg_id&quot;, &quot;display&quot;: {&quot;number_format&quot;: &quot;{0:0&gt;6.0f}&quot;}, &quot;name&quot;: &quot;EPG Id&quot;}" />
+    <meta name="calibre:user_metadata:#pages" content="{&quot;is_category&quot;: false, &quot;#extra#&quot;: null, &quot;kind&quot;: &quot;field&quot;, &quot;is_custom&quot;: true, &quot;is_csp&quot;: false, &quot;colnum&quot;: 2, &quot;column&quot;: &quot;value&quot;, &quot;rec_index&quot;: 22, &quot;search_terms&quot;: [&quot;#pages&quot;], &quot;link_column&quot;: &quot;value&quot;, &quot;is_multiple2&quot;: {}, &quot;is_multiple&quot;: null, &quot;datatype&quot;: &quot;int&quot;, &quot;#value#&quot;: 220, &quot;category_sort&quot;: &quot;value&quot;, &quot;table&quot;: &quot;custom_column_2&quot;, &quot;is_editable&quot;: true, &quot;label&quot;: &quot;pages&quot;, &quot;display&quot;: {&quot;number_format&quot;: &quot;{0:,}&quot;}, &quot;name&quot;: &quot;Páginas&quot;}" />
+    <meta name="calibre:user_metadata:#estado" content="{&quot;is_category&quot;: true, &quot;#extra#&quot;: null, &quot;kind&quot;: &quot;field&quot;, &quot;is_custom&quot;: true, &quot;is_csp&quot;: false, &quot;colnum&quot;: 7, &quot;column&quot;: &quot;value&quot;, &quot;rec_index&quot;: 26, &quot;search_terms&quot;: [&quot;#estado&quot;], &quot;link_column&quot;: &quot;value&quot;, &quot;label&quot;: &quot;estado&quot;, &quot;is_multiple&quot;: null, &quot;datatype&quot;: &quot;text&quot;, &quot;#value#&quot;: &quot;Disp.&quot;, &quot;category_sort&quot;: &quot;value&quot;, &quot;table&quot;: &quot;custom_column_7&quot;, &quot;is_editable&quot;: true, &quot;is_multiple2&quot;: {}, &quot;display&quot;: {&quot;use_decorations&quot;: 0}, &quot;name&quot;: &quot;Estado&quot;}" />
+  </metadata>
+  <manifest>
+    <item id="EPL_logo.png" href="Images/EPL_logo.png" media-type="image/png" />
+    <item id="Section0001.xhtml" href="Text/Section0001.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0002.xhtml" href="Text/Section0002.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0003.xhtml" href="Text/Section0003.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0004.xhtml" href="Text/Section0004.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0005.xhtml" href="Text/Section0005.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0006.xhtml" href="Text/Section0006.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0007.xhtml" href="Text/Section0007.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0008.xhtml" href="Text/Section0008.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0009.xhtml" href="Text/Section0009.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0010.xhtml" href="Text/Section0010.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0011.xhtml" href="Text/Section0011.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0012.xhtml" href="Text/Section0012.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0013.xhtml" href="Text/Section0013.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0014.xhtml" href="Text/Section0014.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0015.xhtml" href="Text/Section0015.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0016.xhtml" href="Text/Section0016.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0017.xhtml" href="Text/Section0017.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0018.xhtml" href="Text/Section0018.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0019.xhtml" href="Text/Section0019.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0020.xhtml" href="Text/Section0020.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0021.xhtml" href="Text/Section0021.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0022.xhtml" href="Text/Section0022.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0023.xhtml" href="Text/Section0023.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0024.xhtml" href="Text/Section0024.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0025.xhtml" href="Text/Section0025.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0026.xhtml" href="Text/Section0026.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0027.xhtml" href="Text/Section0027.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0028.xhtml" href="Text/Section0028.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0029.xhtml" href="Text/Section0029.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0030.xhtml" href="Text/Section0030.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0031.xhtml" href="Text/Section0031.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0032.xhtml" href="Text/Section0032.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0033.xhtml" href="Text/Section0033.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0034.xhtml" href="Text/Section0034.xhtml" media-type="application/xhtml+xml" />
+    <item id="Section0035.xhtml" href="Text/Section0035.xhtml" media-type="application/xhtml+xml" />
+    <item id="autor.jpg" href="Images/autor.jpg" media-type="image/jpeg" />
+    <item id="autor.xhtml" href="Text/autor.xhtml" media-type="application/xhtml+xml" />
+    <item id="cover.jpg" href="Images/cover.jpg" media-type="image/jpeg" />
+    <item id="cubierta.xhtml" href="Text/cubierta.xhtml" media-type="application/xhtml+xml" />
+    <item id="epl.css" href="Styles/epl.css" media-type="text/css" />
+    <item id="ex_libris.png" href="Images/ex_libris.png" media-type="image/png" />
+    <item id="info.xhtml" href="Text/info.xhtml" media-type="application/xhtml+xml" />
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />
+    <item id="sinopsis.xhtml" href="Text/sinopsis.xhtml" media-type="application/xhtml+xml" />
+    <item id="style.css" href="Styles/style.css" media-type="text/css" />
+    <item id="titulo.xhtml" href="Text/titulo.xhtml" media-type="application/xhtml+xml" />
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="cubierta.xhtml" />
+    <itemref idref="sinopsis.xhtml" />
+    <itemref idref="titulo.xhtml" />
+    <itemref idref="info.xhtml" />
+    <itemref idref="Section0001.xhtml" />
+    <itemref idref="Section0002.xhtml" />
+    <itemref idref="Section0003.xhtml" />
+    <itemref idref="Section0004.xhtml" />
+    <itemref idref="Section0005.xhtml" />
+    <itemref idref="Section0006.xhtml" />
+    <itemref idref="Section0007.xhtml" />
+    <itemref idref="Section0008.xhtml" />
+    <itemref idref="Section0009.xhtml" />
+    <itemref idref="Section0010.xhtml" />
+    <itemref idref="Section0011.xhtml" />
+    <itemref idref="Section0012.xhtml" />
+    <itemref idref="Section0013.xhtml" />
+    <itemref idref="Section0014.xhtml" />
+    <itemref idref="Section0015.xhtml" />
+    <itemref idref="Section0016.xhtml" />
+    <itemref idref="Section0017.xhtml" />
+    <itemref idref="Section0018.xhtml" />
+    <itemref idref="Section0019.xhtml" />
+    <itemref idref="Section0020.xhtml" />
+    <itemref idref="Section0021.xhtml" />
+    <itemref idref="Section0022.xhtml" />
+    <itemref idref="Section0023.xhtml" />
+    <itemref idref="Section0024.xhtml" />
+    <itemref idref="Section0025.xhtml" />
+    <itemref idref="Section0026.xhtml" />
+    <itemref idref="Section0027.xhtml" />
+    <itemref idref="Section0028.xhtml" />
+    <itemref idref="Section0029.xhtml" />
+    <itemref idref="Section0030.xhtml" />
+    <itemref idref="Section0031.xhtml" />
+    <itemref idref="Section0032.xhtml" />
+    <itemref idref="Section0033.xhtml" />
+    <itemref idref="Section0034.xhtml" />
+    <itemref idref="Section0035.xhtml" />
+    <itemref idref="autor.xhtml" />
+  </spine>
+  <guide>
+    <reference type="cover" title="Cover" href="Text/cubierta.xhtml" />
+    <reference type="text" title="Text" href="Text/sinopsis.xhtml" />
+    <reference type="title-page" title="Title Page" href="Text/titulo.xhtml" />
+    <reference type="copyright-page" title="Copyright Page" href="Text/info.xhtml" />
+  </guide>
+</package>
