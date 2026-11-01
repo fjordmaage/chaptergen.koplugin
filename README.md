@@ -19,7 +19,8 @@ While reading, open the tools menu → **ChapterGen: chapter marks fix**:
   a tap or swipe.
 - **Fix book file permanently (rewrite EPUB)** — rewrites the book itself so
   the fix works in any reading app. A backup is kept next to the book as
-  `.orig`.
+  `.orig`, and **Restore original book file** in the same menu puts it back
+  if you ever want the untouched file again.
 
 You can also long-press any EPUB in the file manager and pick **Flatten
 chapter list (ChapterGen)** to fix a file without opening it.

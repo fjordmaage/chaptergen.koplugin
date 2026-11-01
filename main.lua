@@ -174,7 +174,11 @@ local function isEpub(filepath)
 end
 
 function ChapterGen:canFixCurrentBook()
-    return self.ui.document and isEpub(self.ui.document.file)
+    return self.ui.document ~= nil and isEpub(self.ui.document.file)
+end
+
+function ChapterGen:hasBackup(filepath)
+    return filepath ~= nil and lfs.attributes(filepath .. ".orig", "mode") == "file"
 end
 
 -- Build a fixed copy of the EPUB next to the original.
@@ -386,6 +390,50 @@ function ChapterGen:fixCurrentBook()
     end
 end
 
+-- Put the .orig backup back in place of the fixed file.
+-- @return true on success; nil, error_text otherwise
+function ChapterGen:restoreFiles(filepath)
+    local backup = filepath .. ".orig"
+    local ok, err = os.remove(filepath)
+    if not ok then
+        return nil, T(_("Could not remove the fixed book file: %1"), tostring(err))
+    end
+    ok, err = os.rename(backup, filepath)
+    if not ok then
+        return nil, T(_("Could not restore the backup: %1"), tostring(err))
+    end
+    return true
+end
+
+function ChapterGen:restoreFileConfirm(filepath, is_current_book)
+    local filename = filepath:match("([^/]+)$") or filepath
+    UIManager:show(ConfirmBox:new{
+        text = T(_("Restore the original book file from its backup?\n\n%1\n\nThe fixed version will be replaced by the untouched original (nested chapter list and all). Your reading position and highlights are kept."), filename),
+        ok_text = _("Restore original"),
+        ok_callback = function()
+            if is_current_book then
+                local plugin = self
+                if self.ui.reloadDocument then
+                    self.ui:reloadDocument(function()
+                        local ok, err = plugin:restoreFiles(filepath)
+                        ChapterGen.pending_message = ok and _("Original book file restored.") or err
+                    end)
+                else
+                    local ok, err = self:restoreFiles(filepath)
+                    UIManager:show(InfoMessage:new{
+                        text = ok and _("Original book file restored. Please close and reopen the book.") or err,
+                    })
+                end
+            else
+                local ok, err = self:restoreFiles(filepath)
+                UIManager:show(InfoMessage:new{
+                    text = ok and _("Original book file restored.") or err,
+                })
+            end
+        end,
+    })
+end
+
 -- }}}
 
 -- File manager long-press dialog button {{{
@@ -396,65 +444,91 @@ function ChapterGen:addFileManagerButtons()
         if not is_file or not isEpub(file) then
             return
         end
-        return {
+        local function closeFileDialog()
+            -- The file dialog lives on the menu widget.
+            local ok_fm, FileManager = pcall(require, "apps/filemanager/filemanager")
+            if ok_fm and FileManager then
+                local menu
+                if FileManager.getMenuInstance then
+                    local ok_menu, m = pcall(FileManager.getMenuInstance)
+                    if ok_menu then
+                        menu = m
+                    end
+                end
+                menu = menu or FileManager.instance and FileManager.instance.file_chooser
+                if menu and menu.file_dialog then
+                    UIManager:close(menu.file_dialog)
+                end
+            end
+        end
+        local row = {
             {
                 text = _("Flatten chapter list (ChapterGen)"),
                 callback = function()
-                    -- Close the file dialog (it lives on the menu widget).
-                    local ok_fm, FileManager = pcall(require, "apps/filemanager/filemanager")
-                    if ok_fm and FileManager then
-                        local menu
-                        if FileManager.getMenuInstance then
-                            local ok_menu, m = pcall(FileManager.getMenuInstance)
-                            if ok_menu then
-                                menu = m
-                            end
-                        end
-                        menu = menu or FileManager.instance and FileManager.instance.file_chooser
-                        if menu and menu.file_dialog then
-                            UIManager:close(menu.file_dialog)
-                        end
-                    end
+                    closeFileDialog()
                     plugin:fixFileConfirm(file, false)
                 end,
             },
         }
+        if plugin:hasBackup(file) then
+            table.insert(row, {
+                text = _("Restore original (ChapterGen)"),
+                callback = function()
+                    closeFileDialog()
+                    plugin:restoreFileConfirm(file, false)
+                end,
+            })
+        end
+        return row
     end)
 end
 
 -- }}}
 
 function ChapterGen:addToMainMenu(menu_items)
-    menu_items.chaptergen = {
-        text = _("ChapterGen: chapter marks fix"),
-        sorting_hint = "more_tools",
+    local help_item = {
+        text = _("Help"),
+        keep_menu_open = true,
+        callback = function()
+            UIManager:show(InfoMessage:new{
+                text = _([[Some books nest their chapters below "Part" entries in the table of contents. KOReader may then only use the part entries for progress-bar chapter ticks and chapter navigation, so most chapters seem to be missing.
+
+ChapterGen fixes this in two ways:
+
+• Flatten chapter hierarchy (per book or for all books): changes only how KOReader sees the table of contents. Instant and reversible.
+
+• Fix book file permanently: rewrites the EPUB so every chapter is a top-level entry, fixing the book in any reader. A backup (.orig) is kept, and can be restored from the same menu. In the file manager, long-press an EPUB to fix or restore it without opening it.]]),
+            })
+        end,
+    }
+    local all_books_item = {
+        text = _("Flatten chapter hierarchy in all books"),
+        help_text = _("Apply the flattening to every book by default. Books with their own per-book setting keep it."),
+        checked_func = function()
+            return G_reader_settings:isTrue("chaptergen_flatten_all")
+        end,
+        callback = function()
+            G_reader_settings:saveSetting("chaptergen_flatten_all",
+                not G_reader_settings:isTrue("chaptergen_flatten_all"))
+            self:refreshToc()
+        end,
+        separator = true,
+    }
+    local sub_item_table
+    if self.ui.toc then
+        -- Reader: full menu for the current book.
         sub_item_table = {
             {
                 text = _("Flatten chapter hierarchy for this book"),
                 help_text = _("Treat every table-of-contents entry of this book as a top-level chapter, so all chapters get a tick on the progress bar and are reachable with chapter navigation. Only changes how KOReader sees the book; the file is not modified."),
-                enabled_func = function()
-                    return self.ui.toc ~= nil
-                end,
                 checked_func = function()
-                    return self.ui.toc ~= nil and self:isFlattenEnabled()
+                    return self:isFlattenEnabled()
                 end,
                 callback = function()
                     self:toggleFlatten()
                 end,
             },
-            {
-                text = _("Flatten chapter hierarchy in all books"),
-                help_text = _("Apply the flattening to every book by default. Books where the toggle above was used keep their own setting."),
-                checked_func = function()
-                    return G_reader_settings:isTrue("chaptergen_flatten_all")
-                end,
-                callback = function()
-                    G_reader_settings:saveSetting("chaptergen_flatten_all",
-                        not G_reader_settings:isTrue("chaptergen_flatten_all"))
-                    self:refreshToc()
-                end,
-                separator = true,
-            },
+            all_books_item,
             {
                 text = _("Fix book file permanently (rewrite EPUB)"),
                 help_text = _("Rewrite the EPUB so the chapter hierarchy is flattened inside the file itself. This fixes the chapter list for any reading app. A backup of the original file is kept next to it."),
@@ -462,25 +536,37 @@ function ChapterGen:addToMainMenu(menu_items)
                     return self:canFixCurrentBook()
                 end,
                 callback = function()
-                    self:fixFileConfirm(self.ui.document.file, true)
+                    if self:canFixCurrentBook() then
+                        self:fixFileConfirm(self.ui.document.file, true)
+                    end
                 end,
             },
             {
-                text = _("Help"),
-                keep_menu_open = true,
+                text = _("Restore original book file (.orig backup)"),
+                help_text = _("Undo the permanent fix: put the backup made by \"Fix book file permanently\" back in place of the fixed file."),
+                enabled_func = function()
+                    return self:canFixCurrentBook() and self:hasBackup(self.ui.document.file)
+                end,
                 callback = function()
-                    UIManager:show(InfoMessage:new{
-                        text = _([[Some books nest their chapters below "Part" entries in the table of contents. KOReader may then only use the part entries for progress-bar chapter ticks and chapter navigation, so most chapters seem to be missing.
-
-ChapterGen fixes this in two ways:
-
-• Flatten chapter hierarchy (per book or for all books): changes only how KOReader sees the table of contents. Instant and reversible.
-
-• Fix book file permanently: rewrites the EPUB so every chapter is a top-level entry, fixing the book in any reader. A backup (.orig) is kept. Also available in the file manager by long-pressing an EPUB.]]),
-                    })
+                    if self:canFixCurrentBook() and self:hasBackup(self.ui.document.file) then
+                        self:restoreFileConfirm(self.ui.document.file, true)
+                    end
                 end,
             },
-        },
+            help_item,
+        }
+    else
+        -- File manager: only the global toggle and help; fixing a specific
+        -- file is done by long-pressing it in the file browser.
+        sub_item_table = {
+            all_books_item,
+            help_item,
+        }
+    end
+    menu_items.chaptergen = {
+        text = _("ChapterGen: chapter marks fix"),
+        sorting_hint = "more_tools",
+        sub_item_table = sub_item_table,
     }
 end
 
