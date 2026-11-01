@@ -17,14 +17,20 @@ This plugin offers two complementary fixes:
 
 2. A permanent fix that rewrites the EPUB itself: the navMap of the
    NCX (EPUB 2) and/or the toc nav of the navigation document (EPUB 3)
-   are flattened, in reading order. A backup of the original file is
-   kept next to it. This fixes the book for every reader, not only
-   KOReader. Available from the reader menu for the current book, and
-   from the long-press file dialog in the file manager.
+   are flattened, in reading order. This fixes the book for every
+   reader, not only KOReader. Available from the reader menu for the
+   current book, and from the long-press file dialog in the file
+   manager.
+
+Since only the TOC files inside the EPUB are modified, the backup for
+the permanent fix is tiny: the original TOC files are stored in the
+book's KOReader settings (sidecar), from which the book can be restored
+at any time. No full copy of the book is kept around.
 ]]
 
 local ConfirmBox = require("ui/widget/confirmbox")
 local Dispatcher = require("dispatcher")
+local DocSettings = require("docsettings")
 local InfoMessage = require("ui/widget/infomessage")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -43,6 +49,9 @@ local ChapterGen = WidgetContainer:extend{
 -- Message to show once the reader has been reloaded after a permanent fix
 -- (survives the ReaderUI teardown/reload cycle as it lives on the class).
 ChapterGen.pending_message = nil
+
+-- Key in the book's sidecar settings holding the original TOC files.
+local BACKUP_SETTING = "chaptergen_backup"
 
 function ChapterGen:onDispatcherRegisterActions()
     Dispatcher:registerAction("chaptergen_toggle_flatten", {
@@ -177,101 +186,77 @@ function ChapterGen:canFixCurrentBook()
     return self.ui.document ~= nil and isEpub(self.ui.document.file)
 end
 
-function ChapterGen:hasBackup(filepath)
-    return filepath ~= nil and lfs.attributes(filepath .. ".orig", "mode") == "file"
+-- Backup bookkeeping: the original TOC files live in the book's sidecar
+-- settings. Standalone reads/writes (DocSettings:open) are only done when
+-- the book is not open in the reader; for the open book, its own
+-- doc_settings instance is used for reading, and writes happen between
+-- document close and reopen (see fixCurrentBook/restoreFileConfirm).
+
+local function readBackupStandalone(filepath)
+    return DocSettings:open(filepath):readSetting(BACKUP_SETTING)
 end
 
--- Build a fixed copy of the EPUB next to the original.
--- @return tmp_path, info_text on success; nil, error_text otherwise
-function ChapterGen:buildFixedEpub(filepath)
+local function saveBackupStandalone(filepath, files)
+    local ds = DocSettings:open(filepath)
+    ds:saveSetting(BACKUP_SETTING, {
+        version = 1,
+        date = os.date("%Y-%m-%d %H:%M:%S"),
+        files = files,
+    })
+    ds:flush()
+end
+
+local function clearBackupStandalone(filepath)
+    local ds = DocSettings:open(filepath)
+    ds:delSetting(BACKUP_SETTING)
+    ds:flush()
+end
+
+function ChapterGen:readBackup(filepath)
+    if self.ui.document and self.ui.document.file == filepath and self.ui.doc_settings then
+        return self.ui.doc_settings:readSetting(BACKUP_SETTING)
+    end
+    return readBackupStandalone(filepath)
+end
+
+function ChapterGen:hasBackup(filepath)
+    if not filepath then
+        return false
+    end
+    if lfs.attributes(filepath .. ".orig", "mode") == "file" then
+        return true -- legacy full-copy backup from 0.1.0-alpha
+    end
+    local backup = self:readBackup(filepath)
+    return type(backup) == "table" and type(backup.files) == "table"
+        and next(backup.files) ~= nil
+end
+
+local function getArchiver()
     local ok, Archiver = pcall(require, "ffi/archiver")
-    if not ok or not Archiver or not Archiver.Reader then
-        return nil, _("This KOReader version is too old for the permanent fix (no libarchive support). The flatten toggle still works.")
+    if ok and Archiver and Archiver.Reader and Archiver.Writer then
+        return Archiver
+    end
+    return nil, _("This KOReader version is too old for the permanent fix (no libarchive support). The flatten toggle still works.")
+end
+
+-- Rewrite the EPUB zip with some entries' content replaced.
+-- @param replacements map of zip entry path -> new content
+-- @return tmp_path on success; nil, error_text otherwise
+function ChapterGen:rebuildEpub(filepath, replacements)
+    local Archiver, archiver_err = getArchiver()
+    if not Archiver then
+        return nil, archiver_err
     end
     local reader = Archiver.Reader:new()
     if not reader:open(filepath) then
         return nil, T(_("Could not open %1"), filepath)
     end
-    local function fail(msg)
-        reader:close()
-        return nil, msg
-    end
-    -- Index all entries first (Reader:seek only knows already-seen entries).
-    for __ in reader:iterate() do
-        -- luacheck: ignore
-    end
-    -- Resolve a (possibly URL-encoded) path to an actual zip entry path.
-    local function findEntry(path)
-        if reader.entries[path] then
-            return path
-        end
-        local decoded = EpubToc.urldecode(path)
-        if reader.entries[decoded] then
-            return decoded
-        end
-    end
-    local function readEntry(path)
-        local entry_path = findEntry(path)
-        if not entry_path then
-            return
-        end
-        return reader:extractToMemory(entry_path), entry_path
-    end
-
-    local container = readEntry("META-INF/container.xml")
-    if not container then
-        return fail(_("Not a valid EPUB: no META-INF/container.xml found."))
-    end
-    local opf_path = EpubToc.findOpfPath(container)
-    local opf = opf_path and readEntry(opf_path)
-    if not opf then
-        return fail(_("Not a valid EPUB: package document (OPF) not found."))
-    end
-    local opf_dir = EpubToc.dirname(opf_path)
-    local ncx_href, nav_href = EpubToc.findTocHrefs(opf)
-
-    local replacements = {}
-    local n_entries, was_flat = 0, false
-    if ncx_href then
-        local ncx, ncx_path = readEntry(EpubToc.joinPath(opf_dir, ncx_href:gsub("#.*$", "")))
-        if ncx then
-            local new_ncx, res = EpubToc.flattenNcx(ncx)
-            if new_ncx then
-                replacements[ncx_path] = new_ncx
-                n_entries = math.max(n_entries, res.entries)
-            elseif res == "already_flat" then
-                was_flat = true
-            else
-                logger.warn("ChapterGen: could not flatten NCX:", res)
-            end
-        end
-    end
-    if nav_href then
-        local nav, nav_path = readEntry(EpubToc.joinPath(opf_dir, nav_href:gsub("#.*$", "")))
-        if nav then
-            local new_nav, res = EpubToc.flattenNav(nav)
-            if new_nav then
-                replacements[nav_path] = new_nav
-                n_entries = math.max(n_entries, res.entries)
-            elseif res == "already_flat" then
-                was_flat = true
-            else
-                logger.warn("ChapterGen: could not flatten nav document:", res)
-            end
-        end
-    end
-    if next(replacements) == nil then
-        if was_flat then
-            return fail(_("This book's table of contents is already flat — nothing to fix."))
-        end
-        return fail(_("No table of contents found in this book."))
-    end
-
     local tmp_path = filepath .. ".chaptergen.tmp"
     os.remove(tmp_path)
     local writer = Archiver.Writer:new()
     if not writer:open(tmp_path, "zip") then
-        return fail(_("Could not create the temporary file for the fixed book."))
+        reader:close()
+        return nil, _("Could not create the temporary file for the book.")
     end
     local write_err
     -- Per the EPUB spec the mimetype entry must come first, uncompressed.
@@ -305,34 +290,109 @@ function ChapterGen:buildFixedEpub(filepath)
     reader:close()
     if write_err then
         os.remove(tmp_path)
-        return nil, T(_("Could not write the fixed book: %1"), tostring(write_err))
+        return nil, T(_("Could not write the book: %1"), tostring(write_err))
     end
-    return tmp_path, T(_("Chapter list flattened: %1 chapters are now top-level entries."), n_entries)
+    return tmp_path
 end
 
--- Replace the original with the fixed file, keeping a backup.
--- @return true on success; nil, error_text otherwise
-function ChapterGen:swapFiles(filepath, tmp_path)
-    local backup = filepath .. ".orig"
-    if lfs.attributes(backup, "mode") then
-        -- A backup from a previous run already exists: keep it (it is the
-        -- pristine original) and just drop the current version.
-        local ok, err = os.remove(filepath)
-        if not ok then
-            os.remove(tmp_path)
-            return nil, T(_("Could not replace the book file: %1"), tostring(err))
+-- Find and flatten the TOC documents of an EPUB.
+-- @return replacements (path -> flattened content),
+--         originals (path -> original content),
+--         info_text on success; nil, error_text otherwise
+function ChapterGen:analyzeEpub(filepath)
+    local Archiver, archiver_err = getArchiver()
+    if not Archiver then
+        return nil, archiver_err
+    end
+    local reader = Archiver.Reader:new()
+    if not reader:open(filepath) then
+        return nil, T(_("Could not open %1"), filepath)
+    end
+    local function fail(msg)
+        reader:close()
+        return nil, msg
+    end
+    -- Index all entries first (Reader:seek only knows already-seen entries).
+    for __ in reader:iterate() do
+        -- luacheck: ignore
+    end
+    -- Resolve a (possibly URL-encoded) path to an actual zip entry path.
+    local function readEntry(path)
+        local entry_path
+        if reader.entries[path] then
+            entry_path = path
+        else
+            local decoded = EpubToc.urldecode(path)
+            if reader.entries[decoded] then
+                entry_path = decoded
+            end
         end
-    else
-        local ok, err = os.rename(filepath, backup)
-        if not ok then
-            os.remove(tmp_path)
-            return nil, T(_("Could not create the backup file: %1"), tostring(err))
+        if not entry_path then
+            return
+        end
+        return reader:extractToMemory(entry_path), entry_path
+    end
+
+    local container = readEntry("META-INF/container.xml")
+    if not container then
+        return fail(_("Not a valid EPUB: no META-INF/container.xml found."))
+    end
+    local opf_path = EpubToc.findOpfPath(container)
+    local opf = opf_path and readEntry(opf_path)
+    if not opf then
+        return fail(_("Not a valid EPUB: package document (OPF) not found."))
+    end
+    local opf_dir = EpubToc.dirname(opf_path)
+    local ncx_href, nav_href = EpubToc.findTocHrefs(opf)
+
+    local replacements, originals = {}, {}
+    local n_entries, was_flat = 0, false
+    if ncx_href then
+        local ncx, ncx_path = readEntry(EpubToc.joinPath(opf_dir, ncx_href:gsub("#.*$", "")))
+        if ncx then
+            local new_ncx, res = EpubToc.flattenNcx(ncx)
+            if new_ncx then
+                replacements[ncx_path] = new_ncx
+                originals[ncx_path] = ncx
+                n_entries = math.max(n_entries, res.entries)
+            elseif res == "already_flat" then
+                was_flat = true
+            else
+                logger.warn("ChapterGen: could not flatten NCX:", res)
+            end
         end
     end
+    if nav_href then
+        local nav, nav_path = readEntry(EpubToc.joinPath(opf_dir, nav_href:gsub("#.*$", "")))
+        if nav then
+            local new_nav, res = EpubToc.flattenNav(nav)
+            if new_nav then
+                replacements[nav_path] = new_nav
+                originals[nav_path] = nav
+                n_entries = math.max(n_entries, res.entries)
+            elseif res == "already_flat" then
+                was_flat = true
+            else
+                logger.warn("ChapterGen: could not flatten nav document:", res)
+            end
+        end
+    end
+    reader:close()
+    if next(replacements) == nil then
+        if was_flat then
+            return nil, _("This book's table of contents is already flat — nothing to fix.")
+        end
+        return nil, _("No table of contents found in this book.")
+    end
+    return replacements, originals,
+        T(_("Chapter list flattened: %1 chapters are now top-level entries."), n_entries)
+end
+
+-- Atomically replace the book with the rewritten copy.
+-- @return true on success; nil, error_text otherwise
+function ChapterGen:replaceFile(filepath, tmp_path)
     local ok, err = os.rename(tmp_path, filepath)
     if not ok then
-        -- Try to restore the original so the user is not left without a book.
-        os.rename(backup, filepath)
         os.remove(tmp_path)
         return nil, T(_("Could not replace the book file: %1"), tostring(err))
     end
@@ -342,8 +402,8 @@ end
 function ChapterGen:fixFileConfirm(filepath, is_current_book)
     local filename = filepath:match("([^/]+)$") or filepath
     UIManager:show(ConfirmBox:new{
-        text = T(_("Flatten the chapter hierarchy inside this EPUB?\n\n%1\n\nEvery chapter becomes a top-level entry, so all chapters show up in the progress bar and in chapter navigation — in KOReader and any other reader. A backup is kept as %2."),
-            filename, filename .. ".orig"),
+        text = T(_("Flatten the chapter hierarchy inside this EPUB?\n\n%1\n\nEvery chapter becomes a top-level entry, so all chapters show up in the progress bar and in chapter navigation — in KOReader and any other reader. The original chapter list is backed up in the book's settings and can be restored at any time."),
+            filename),
         ok_text = _("Fix book"),
         ok_callback = function()
             if is_current_book then
@@ -356,79 +416,126 @@ function ChapterGen:fixFileConfirm(filepath, is_current_book)
 end
 
 function ChapterGen:fixFile(filepath)
-    local tmp_path, msg = self:buildFixedEpub(filepath)
-    if not tmp_path then
-        UIManager:show(InfoMessage:new{ text = msg })
+    local replacements, originals, msg = self:analyzeEpub(filepath)
+    if not replacements then
+        UIManager:show(InfoMessage:new{ text = originals }) -- the error text
         return
     end
-    local ok, err = self:swapFiles(filepath, tmp_path)
-    UIManager:show(InfoMessage:new{ text = ok and msg or err })
+    local tmp_path, err = self:rebuildEpub(filepath, replacements)
+    if not tmp_path then
+        UIManager:show(InfoMessage:new{ text = err })
+        return
+    end
+    local ok, replace_err = self:replaceFile(filepath, tmp_path)
+    if ok then
+        saveBackupStandalone(filepath, originals)
+    end
+    UIManager:show(InfoMessage:new{ text = ok and msg or replace_err })
 end
 
 function ChapterGen:fixCurrentBook()
     local filepath = self.ui.document.file
     -- Build the fixed copy while the book is still open (reading is safe),
     -- then swap the files in between closing and reopening the document.
-    local tmp_path, msg = self:buildFixedEpub(filepath)
+    local replacements, originals, msg = self:analyzeEpub(filepath)
+    if not replacements then
+        UIManager:show(InfoMessage:new{ text = originals }) -- the error text
+        return
+    end
+    local tmp_path, err = self:rebuildEpub(filepath, replacements)
     if not tmp_path then
-        UIManager:show(InfoMessage:new{ text = msg })
+        UIManager:show(InfoMessage:new{ text = err })
         return
     end
     if self.ui.reloadDocument then
         local plugin = self
         self.ui:reloadDocument(function()
-            local ok, err = plugin:swapFiles(filepath, tmp_path)
+            -- The reader has closed the book and flushed its sidecar; swap
+            -- the file and record the backup before the book is reopened.
+            local ok, replace_err = plugin:replaceFile(filepath, tmp_path)
+            if ok then
+                saveBackupStandalone(filepath, originals)
+            end
             -- Shown by the plugin instance of the reloaded ReaderUI.
-            ChapterGen.pending_message = ok and msg or err
+            ChapterGen.pending_message = ok and msg or replace_err
         end)
     else
-        local ok, err = self:swapFiles(filepath, tmp_path)
+        local ok, replace_err = self:replaceFile(filepath, tmp_path)
+        if ok then
+            saveBackupStandalone(filepath, originals)
+            if self.ui.doc_settings then
+                -- Keep the open book's settings in sync, so its flush on
+                -- close doesn't drop the backup again.
+                self.ui.doc_settings:saveSetting(BACKUP_SETTING, readBackupStandalone(filepath))
+            end
+        end
         UIManager:show(InfoMessage:new{
             text = ok and (msg .. "\n\n" .. _("Please close and reopen the book to see the fixed chapter list."))
-                or err,
+                or replace_err,
         })
     end
 end
 
--- Put the .orig backup back in place of the fixed file.
+-- Undo the permanent fix: put the original TOC back.
+-- Prefers a legacy .orig full-file backup (byte-identical original) when one
+-- exists; otherwise rebuilds the book from the TOC files stored in the
+-- book's settings.
 -- @return true on success; nil, error_text otherwise
-function ChapterGen:restoreFiles(filepath)
-    local backup = filepath .. ".orig"
-    local ok, err = os.remove(filepath)
-    if not ok then
-        return nil, T(_("Could not remove the fixed book file: %1"), tostring(err))
+function ChapterGen:restoreFile(filepath)
+    local legacy = filepath .. ".orig"
+    if lfs.attributes(legacy, "mode") == "file" then
+        local ok, err = os.remove(filepath)
+        if not ok then
+            return nil, T(_("Could not remove the fixed book file: %1"), tostring(err))
+        end
+        ok, err = os.rename(legacy, filepath)
+        if not ok then
+            return nil, T(_("Could not restore the backup: %1"), tostring(err))
+        end
+        clearBackupStandalone(filepath)
+        return true
     end
-    ok, err = os.rename(backup, filepath)
-    if not ok then
-        return nil, T(_("Could not restore the backup: %1"), tostring(err))
+    local backup = readBackupStandalone(filepath)
+    if type(backup) ~= "table" or type(backup.files) ~= "table"
+        or next(backup.files) == nil then
+        return nil, _("No backup found for this book.")
     end
+    local tmp_path, err = self:rebuildEpub(filepath, backup.files)
+    if not tmp_path then
+        return nil, err
+    end
+    local ok, replace_err = self:replaceFile(filepath, tmp_path)
+    if not ok then
+        return nil, replace_err
+    end
+    clearBackupStandalone(filepath)
     return true
 end
 
 function ChapterGen:restoreFileConfirm(filepath, is_current_book)
     local filename = filepath:match("([^/]+)$") or filepath
     UIManager:show(ConfirmBox:new{
-        text = T(_("Restore the original book file from its backup?\n\n%1\n\nThe fixed version will be replaced by the untouched original (nested chapter list and all). Your reading position and highlights are kept."), filename),
+        text = T(_("Restore the original chapter list of this book?\n\n%1\n\nThe book gets its original (nested) table of contents back. Your reading position and highlights are kept."), filename),
         ok_text = _("Restore original"),
         ok_callback = function()
-            if is_current_book then
+            if is_current_book and self.ui.reloadDocument then
                 local plugin = self
-                if self.ui.reloadDocument then
-                    self.ui:reloadDocument(function()
-                        local ok, err = plugin:restoreFiles(filepath)
-                        ChapterGen.pending_message = ok and _("Original book file restored.") or err
-                    end)
-                else
-                    local ok, err = self:restoreFiles(filepath)
-                    UIManager:show(InfoMessage:new{
-                        text = ok and _("Original book file restored. Please close and reopen the book.") or err,
-                    })
-                end
+                self.ui:reloadDocument(function()
+                    local ok, err = plugin:restoreFile(filepath)
+                    ChapterGen.pending_message = ok and _("Original chapter list restored.") or err
+                end)
             else
-                local ok, err = self:restoreFiles(filepath)
-                UIManager:show(InfoMessage:new{
-                    text = ok and _("Original book file restored.") or err,
-                })
+                local ok, err = self:restoreFile(filepath)
+                local msg = ok and _("Original chapter list restored.") or err
+                if ok and is_current_book then
+                    if self.ui.doc_settings then
+                        -- Keep the open book's settings in sync, so its
+                        -- flush on close doesn't resurrect the backup.
+                        self.ui.doc_settings:delSetting(BACKUP_SETTING)
+                    end
+                    msg = msg .. "\n\n" .. _("Please close and reopen the book.")
+                end
+                UIManager:show(InfoMessage:new{ text = msg })
             end
         end,
     })
@@ -497,7 +604,7 @@ ChapterGen fixes this in two ways:
 
 • Flatten chapter hierarchy (per book or for all books): changes only how KOReader sees the table of contents. Instant and reversible.
 
-• Fix book file permanently: rewrites the EPUB so every chapter is a top-level entry, fixing the book in any reader. A backup (.orig) is kept, and can be restored from the same menu. In the file manager, long-press an EPUB to fix or restore it without opening it.]]),
+• Fix book file permanently: rewrites the EPUB so every chapter is a top-level entry, fixing the book in any reader. The original chapter list is backed up in the book's settings and can be restored from the same menu. In the file manager, long-press an EPUB to fix or restore it without opening it.]]),
             })
         end,
     }
@@ -531,7 +638,7 @@ ChapterGen fixes this in two ways:
             all_books_item,
             {
                 text = _("Fix book file permanently (rewrite EPUB)"),
-                help_text = _("Rewrite the EPUB so the chapter hierarchy is flattened inside the file itself. This fixes the chapter list for any reading app. A backup of the original file is kept next to it."),
+                help_text = _("Rewrite the EPUB so the chapter hierarchy is flattened inside the file itself. This fixes the chapter list for any reading app. The original chapter list is backed up in the book's settings."),
                 enabled_func = function()
                     return self:canFixCurrentBook()
                 end,
@@ -542,8 +649,8 @@ ChapterGen fixes this in two ways:
                 end,
             },
             {
-                text = _("Restore original book file (.orig backup)"),
-                help_text = _("Undo the permanent fix: put the backup made by \"Fix book file permanently\" back in place of the fixed file."),
+                text = _("Restore original chapter list"),
+                help_text = _("Undo the permanent fix: put the backed-up original table of contents back into the book."),
                 enabled_func = function()
                     return self:canFixCurrentBook() and self:hasBackup(self.ui.document.file)
                 end,
