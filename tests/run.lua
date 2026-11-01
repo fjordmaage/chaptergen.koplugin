@@ -1,8 +1,8 @@
--- Unit tests for chaptergen.koplugin/epubtoc.lua
+-- Unit tests for epubtoc.lua
 -- Run from the repository root with any Lua 5.1+ interpreter:
 --   lua tests/run.lua
 
-package.path = "chaptergen.koplugin/?.lua;" .. package.path
+package.path = "./?.lua;" .. package.path
 local EpubToc = require("epubtoc")
 
 local failures = 0

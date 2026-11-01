@@ -1,101 +1,41 @@
-# ChapterGen — KOReader plugin: fix missing chapter marks
+# chaptergen.koplugin
 
-Some EPUBs nest their chapters below *Part* entries in the table of contents
-(e.g. `PART ONE → chapters 1–17`, `PART TWO → chapters 18–31`). Depending on
-KOReader version and settings, only the **top-level** TOC entries are then used
-for the progress-bar chapter ticks and for chapter navigation ("skip to next
-chapter", skim widget, …) — so almost all chapters seem to be missing: you get
-a couple of ticks at the very start (cover, title page), one in the middle
-(PART TWO) and a couple at the end (acknowledgements, about the author),
-while books with a flat TOC work fine.
+A KOReader plugin that fixes books where most chapters are missing from the
+progress bar and from "skip to next chapter".
 
-ChapterGen fixes this, either per book without touching the file (like
-patch-style plugins do it) or permanently inside the EPUB itself.
-
-## What it does
-
-**1. Flatten chapter hierarchy (soft fix, reversible)**
-A per-book toggle (plus an optional "all books" default) that promotes every
-TOC entry to the top level in KOReader's in-memory table of contents. The book
-file is untouched. Progress-bar ticks, "skip to next/previous chapter",
-chapter progress in the footer and the skim widget immediately see every
-chapter. Works for any document format KOReader can open, and switching the
-toggle off instantly restores the original hierarchy. The setting is saved per
-book in its sidecar.
-
-**2. Fix book file permanently (rewrite EPUB)**
-Rewrites the EPUB so the chapter hierarchy is flattened *inside the file*:
-
-- EPUB 2: the `navMap` of the NCX is flattened (all `navPoint`s become
-  top-level, in reading order; `dtb:depth` is set to 1).
-- EPUB 3: the `toc` nav of the navigation document is flattened to a single
-  `<ol>`.
-- Everything else in the book (text, images, styles, metadata, reading
-  position, highlights) is untouched.
-- A backup of the original file is kept next to it as `<book>.epub.orig`.
-
-This fixes the book for every reading app, not just KOReader.
+Some EPUBs nest their chapters under *Part One* / *Part Two* entries in the
+table of contents. KOReader may then only count the parts as chapters, so you
+get a couple of chapter ticks at the start and end of the book and almost
+nothing in between. This plugin flattens the chapter hierarchy so every
+chapter counts again.
 
 ## Usage
 
-- **While reading** (tools menu ⚙ → *ChapterGen: chapter marks fix*):
-  - *Flatten chapter hierarchy for this book* — the soft toggle.
-  - *Flatten chapter hierarchy in all books* — make it the default.
-  - *Fix book file permanently (rewrite EPUB)* — rewrites the current book
-    and reloads it in place.
-- **In the file manager**: long-press an EPUB → *Flatten chapter list
-  (ChapterGen)* — permanently fixes that file without opening it.
-- A gesture/dispatcher action *Toggle flat chapter list (ChapterGen)* is also
-  available.
+While reading, open the tools menu → **ChapterGen: chapter marks fix**:
 
-Note: with the flatten toggle active, the TOC list is shown without
-indentation (parts and chapters on one level) — that is exactly what makes
-every chapter count as a chapter.
+- **Flatten chapter hierarchy for this book** — instant fix, nothing is
+  written to the file, and you can toggle it off again. There's also a switch
+  to apply it to all books by default, and a gesture action if you want it on
+  a tap or swipe.
+- **Fix book file permanently (rewrite EPUB)** — rewrites the book itself so
+  the fix works in any reading app. A backup is kept next to the book as
+  `.orig`.
+
+You can also long-press any EPUB in the file manager and pick **Flatten
+chapter list (ChapterGen)** to fix a file without opening it.
+
+Heads-up: with the fix active, the table of contents is shown as a flat list
+(parts and chapters on the same level) — that's the point. 🙂
 
 ## Installation
 
-1. Copy the `chaptergen.koplugin` folder into the `plugins` directory of your
-   KOReader installation (e.g. `koreader/plugins/chaptergen.koplugin` — next
-   to `hello.koplugin` etc.).
-2. Restart KOReader.
+Copy this folder into `koreader/plugins/` as `chaptergen.koplugin` and restart
+KOReader.
 
-The soft fix works on any reasonably recent KOReader. The permanent EPUB
-rewrite needs a KOReader new enough to ship libarchive (`ffi/archiver`,
-releases from 2024 on); on older versions the plugin tells you so and the soft
-fix still works.
-
-## Why this happens (background)
-
-In a nested NCX the chapters live at depth 2:
-
-```xml
-<navPoint id="navPoint-3" playOrder="3">        <!-- PART ONE (depth 1) -->
-  <navLabel><text>PART ONE</text></navLabel>
-  <content src="Text/Section0002.xhtml"/>
-  <navPoint id="navPoint-4" playOrder="4">      <!-- chapter 1 (depth 2) -->
-    <navLabel><text>1</text></navLabel>
-    <content src="Text/Section0003.xhtml"/>
-  </navPoint>
-  ...
-</navPoint>
-```
-
-Chapter ticks/navigation that only consider depth 1 see just the parts.
-After flattening, every entry is a depth-1 `navPoint` in reading order, which
-is exactly how books that behave correctly (flat TOC) are structured.
+The permanent EPUB rewrite needs a KOReader from 2024 or newer; on older
+versions the toggle still works.
 
 ## Development
 
-The TOC transformation lives in `chaptergen.koplugin/epubtoc.lua` and is pure
-Lua with no KOReader dependencies. Run the tests from the repository root:
-
-```sh
-lua tests/run.lua
-```
-
-The fixtures include the real nested/flat NCX structures that motivated the
-plugin.
-
-## License
-
-See [LICENSE](LICENSE).
+The TOC rewriting lives in `epubtoc.lua` (plain Lua, no KOReader
+dependencies). Run the tests with `lua tests/run.lua`.
