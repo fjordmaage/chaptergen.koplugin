@@ -37,10 +37,10 @@ KOReader.
 The permanent EPUB rewrite needs a KOReader from 2024 or newer; on older
 versions the toggle still works.
 
-## Full disclosure
+## MADE WITH AI
 
-This plugin was vibecoded with AI (Anthropic's Claude), prompted and tested by
-a human on real books. It's a very simple plugin — it mostly just flattens a
+This plugin was vibecoded with AI (Claude), prompted and tested by
+a human (me) on real books. It's a very simple plugin — it mostly just flattens a
 list, and the permanent fix keeps a backup of what it changed — so it should
 work fine, but it hasn't seen many devices or books yet. Use at your own risk,
 and if something misbehaves, please open an issue.
